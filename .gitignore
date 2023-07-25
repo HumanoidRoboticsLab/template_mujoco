@@ -30,3 +30,9 @@
 *.exe
 *.out
 *.app
+
+*/*.DS_store
+*.DS_store
+*/build/*
+/build/*
+*/build

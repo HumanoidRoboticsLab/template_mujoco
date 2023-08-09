@@ -1,25 +1,7 @@
-# Copyright 2021 DeepMind Technologies Limited
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     https://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 cmake_minimum_required(VERSION 3.16)
 
-# INTERPROCEDURAL_OPTIMIZATION is enforced when enabled.
 set(CMAKE_POLICY_DEFAULT_CMP0069 NEW)
-# Default to GLVND if available.
 set(CMAKE_POLICY_DEFAULT_CMP0072 NEW)
-
-# This line has to appear before 'PROJECT' in order to be able to disable incremental linking
 set(MSVC_INCREMENTAL_DEFAULT ON)
 
 project(
@@ -35,8 +17,22 @@ if(APPLE)
   enable_language(OBJCXX)
 endif()
 
+
+
+#################################
+# Open Libraries ADD here
+#################################
+option(MUJOCO_BUILD_EXAMPLES "Build samples for MuJoCo" OFF)
+option(MUJOCO_BUILD_SIMULATE "Build simulate library for MuJoCo" ON)
+option(MUJOCO_BUILD_TESTS "Build tests for MuJoCo" OFF)
+option(MUJOCO_TEST_PYTHON_UTIL "Build and test utility libraries for Python bindings" ON)
 add_subdirectory(${PROJECT_SOURCE_DIR}/libraries/mujoco)                             # Add subdirectory
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/libraries/mujoco/sample/cmake") # CMake Path append
+#################################
+# Open Libraries ENDS here
+#################################
+
+
 
 # Check if we are building as standalone project.
 set(SAMPLE_STANDALONE OFF)
@@ -60,19 +56,21 @@ set(MUJOCO_SAMPLE_LINK_OPTIONS "${EXTRA_LINK_OPTIONS}")
 
 if(MUJOCO_HARDEN)
   if(WIN32)
-    set(MUJOCO_SAMPLE_LINK_OPTIONS "${MUJOCO_SAMPLE_LINK_OPTIONS}" -Wl,/DYNAMICBASE)
+    set(MUJOCO_SAMPLE_LINK_OPTIONS "${MUJOCO_SAMPLE_LINK_OPTIONS}" -O3 -Wl,/DYNAMICBASE)
   else()
-    set(MUJOCO_SAMPLE_COMPILE_OPTIONS "${MUJOCO_SAMPLE_COMPILE_OPTIONS}" -fPIE)
+    set(MUJOCO_SAMPLE_COMPILE_OPTIONS "${MUJOCO_SAMPLE_COMPILE_OPTIONS}" -O3 -fPIE)
     if(APPLE)
-      set(MUJOCO_SAMPLE_LINK_OPTIONS "${MUJOCO_SAMPLE_LINK_OPTIONS}" -Wl,-pie)
+      set(MUJOCO_SAMPLE_LINK_OPTIONS "${MUJOCO_SAMPLE_LINK_OPTIONS}" -O3 -Wl,-pie)
     else()
-      set(MUJOCO_SAMPLE_LINK_OPTIONS "${MUJOCO_SAMPLE_LINK_OPTIONS}" -pie)
+      set(MUJOCO_SAMPLE_LINK_OPTIONS "${MUJOCO_SAMPLE_LINK_OPTIONS}" -O3 -pie)
     endif()
   endif()
 endif()
 
 
-# Custom Starts from here
+#################################
+# Custom Sources STARTS from here
+#################################
 find_package(Eigen3 REQUIRED)
 
 include_directories(
@@ -95,6 +93,10 @@ target_link_libraries(
   lodepng
 )
 target_compile_options(template PUBLIC ${MUJOCO_SIMULATE_COMPILE_OPTIONS})
+#################################
+# Custom Sources ENDS here
+#################################
+
 
 if(APPLE AND MUJOCO_BUILD_MACOS_FRAMEWORKS)
   embed_in_bundle(template)
